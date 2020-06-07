@@ -18,6 +18,16 @@ namespace PairReader
             }
         }
 
+        internal static Card FindByName(string cardName)
+        {
+            if (CardList.Exists(x => x.name == cardName))
+            {
+                return CardList.Find(x => x.name == cardName);
+            }
+
+            return null;
+        }
+
         internal static Card Find(string cardId)
         {
             if (CardList.Exists(x => x.id == cardId))

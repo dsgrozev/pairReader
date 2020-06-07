@@ -26,8 +26,11 @@ namespace PairReader
             {
                 string gameCode = String.Empty;
                 Game game = ParseXml(ReadXml(ref gameCode), gameCode);
-                Console.WriteLine("Adding game: " + game.Code);
-                Save(game);
+                if (game != null)
+                {
+                    Console.WriteLine("Adding game: " + game.Code);
+                    Save(game);
+                }
             }
         }
 
@@ -53,11 +56,11 @@ namespace PairReader
             {
                 try
                 {
-                    driver.Navigate().Refresh();
                     success = wait.Until(ExpectedConditions.ElementExists(By.LinkText(linkText)));
                 }
                 catch (Exception)
                 {
+                    driver.Navigate().Refresh();
                 }
             } while (success == null);
             if (click)
@@ -83,6 +86,10 @@ namespace PairReader
 
         private static Game ParseXml(string xml, string gameCode)
         {
+            if (xml == null)
+            {
+                return null;
+            }
             string gameXml = xml.Split('\n')[2];
             Game game = new Game
             {
@@ -152,15 +159,22 @@ namespace PairReader
         private static string ReadXml(ref String gameCode)
         {
             string link = string.Empty;
+            int counter = 0;
             do
             {
+                if (counter++ == 10000)
+                {
+                    mainDriver.Navigate().Refresh();
+                    Console.WriteLine("Refresh");
+                    counter = 0;
+                }
                 Console.Write(".");
                 try 
                 {
                     link = mainDriver.FindElementByClassName("replay-feed-item").GetAttribute("href");
                     gameCode = link.Split('/')[4];
                 }
-                catch (StaleElementReferenceException e)
+                catch (Exception)
                 {
                     continue;
                 }
@@ -171,8 +185,15 @@ namespace PairReader
             IWebElement xmlLink = new WebDriverWait(replayDriver, TimeSpan.FromSeconds(10))
                 .Until(ExpectedConditions.ElementToBeClickable(By.LinkText("Download Replay XML")));
             string href = xmlLink.GetAttribute("href");
-
-            Stream input = WebRequest.Create(href).GetResponse().GetResponseStream();
+            Stream input;
+            try
+            {
+                 input = WebRequest.Create(href).GetResponse().GetResponseStream();
+            }
+            catch(WebException)
+            {
+                return null;
+            }
             StringBuilder sb = new StringBuilder();
             using (var zip = new GZipStream(input, CompressionMode.Decompress, true))
             {
@@ -187,7 +208,6 @@ namespace PairReader
                 }
             }
             input.Close();
-            Console.WriteLine(sb.ToString());
             return sb.ToString();
         }
 

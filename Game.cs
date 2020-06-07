@@ -106,6 +106,10 @@ namespace PairReader
 
         private void AddCardPair(CardPair cp)
         {
+            if (cp == null)
+            {
+                return;
+            }
             if (CardPairs.Contains(cp))
             {
                 CardPair existing = CardPairs.Find(x => x == cp);
@@ -127,19 +131,39 @@ namespace PairReader
                     continue;
                 }
                 List<CardEntity> others = Cards.FindAll(x => x.Turn == ce.Turn);
-                others.AddRange(Cards.FindAll(x => x.Turn == ce.Turn - 2));
+                others.AddRange(Cards.FindAll(x => x.Turn == ce.Turn + 2));
                 foreach (CardEntity other in others)
                 {
                     if(other.Name is null)
                     {
                         continue;
                     }
-                    if (ce.Name != other.Name)
+                    if (IsValidPair(ce, other))
                     {
                         AddCardPair(new CardPair(ce.Name, other.Name, ce.Owner.HeroClass, ce.Owner.IsWinner));
                     }
                 }
             }
+        }
+
+        private bool IsValidPair(CardEntity ce, CardEntity other)
+        {
+            if (ce.Name == other.Name)
+            {
+                return false;
+            }
+            if (ce.Owner != other.Owner)
+            {
+                throw new InvalidProgramException();
+            }
+            //string heroClass1 = PairReader.Cards.FindByName(ce.Name).cardClass;
+            //string heroClass2 = PairReader.Cards.FindByName(other.Name).cardClass;
+            //if ((heroClass1 != ce.Owner.HeroClass.ToString() && heroClass1 != "NEUTRAL") ||
+            //    (heroClass2 != ce.Owner.HeroClass.ToString() && heroClass2 != "NEUTRAL"))
+            //{
+            //    return false;
+            //}
+            return true;
         }
 
         internal static void LoadGameCodes()

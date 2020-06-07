@@ -55,7 +55,7 @@ namespace PairReader
             {
                 cardType = CardType.SECRET;
             }
-            
+
             if (int.Parse(entityId) > 64)
             {
                 return;
