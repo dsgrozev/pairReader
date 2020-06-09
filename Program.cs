@@ -52,15 +52,20 @@ namespace PairReader
 
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(120));
             IWebElement success = null;
+            bool firstAttempt = true;
             do
             {
                 try
                 {
+                    if (!firstAttempt) {
+                        driver.Navigate().Refresh();
+                        firstAttempt = false;
+                    }
                     success = wait.Until(ExpectedConditions.ElementExists(By.LinkText(linkText)));
                 }
                 catch (Exception)
                 {
-                    driver.Navigate().Refresh();
+                    
                 }
             } while (success == null);
             if (click)
@@ -178,7 +183,7 @@ namespace PairReader
                 {
                     continue;
                 }
-            } while (link == "" || Game.ContainsGame(gameCode));
+            } while (gameCode == "" || Game.ContainsGame(gameCode));
 
             Console.WriteLine();
             replayDriver = StartDriver(link, "Download Replay XML", false);
