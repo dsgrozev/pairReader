@@ -112,7 +112,7 @@ namespace PairReader
             }
             if (CardPairs.Contains(cp))
             {
-                CardPair existing = CardPairs.Find(x => x == cp);
+                CardPair existing = CardPairs.Find(x => x.Equals(cp));
                 if (existing != null && existing.Wins == cp.Wins)
                 {
                     return;
@@ -148,13 +148,9 @@ namespace PairReader
 
         private bool IsValidPair(CardEntity ce, CardEntity other)
         {
-            if (ce.Name == other.Name)
+            if (ce.Name == other.Name || ce.Owner != other.Owner)
             {
                 return false;
-            }
-            if (ce.Owner != other.Owner)
-            {
-                throw new InvalidProgramException();
             }
             //string heroClass1 = PairReader.Cards.FindByName(ce.Name).cardClass;
             //string heroClass2 = PairReader.Cards.FindByName(other.Name).cardClass;
