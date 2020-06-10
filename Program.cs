@@ -87,7 +87,8 @@ namespace PairReader
             Console.WriteLine("Saving " + CardPair.CardPairs.Count + " total card pairs.");
             Game.SaveGameCodes();
             Console.WriteLine("Games saved: " + Game.GameCodes.Count);
-            Console.WriteLine("Games/Pairs = " + (1.0 * Game.GameCodes.Count / CardPair.CardPairs.Count));
+            Console.WriteLine("Games/Pairs = " +
+                String.Format("{0:00.00}", 100.0 * Game.GameCodes.Count / CardPair.CardPairs.Count));
         }
 
         private static Game ParseXml(string xml, string gameCode)
