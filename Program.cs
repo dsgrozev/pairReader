@@ -59,8 +59,8 @@ namespace PairReader
                 {
                     if (!firstAttempt) {
                         driver.Navigate().Refresh();
-                        firstAttempt = false;
                     }
+                    firstAttempt = false;
                     success = wait.Until(ExpectedConditions.ElementExists(By.LinkText(linkText)));
                 }
                 catch (Exception)
@@ -87,6 +87,7 @@ namespace PairReader
             Console.WriteLine("Saving " + CardPair.CardPairs.Count + " total card pairs.");
             Game.SaveGameCodes();
             Console.WriteLine("Games saved: " + Game.GameCodes.Count);
+            Console.WriteLine("Games/Pairs = " + (1.0 * Game.GameCodes.Count / CardPair.CardPairs.Count));
         }
 
         private static Game ParseXml(string xml, string gameCode)
