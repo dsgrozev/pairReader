@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace PairReader
 {
-    internal class CardEntity :IComparable<CardEntity>
+    internal class CardEntity : IComparable<CardEntity>
     {
         internal string CardId { get; set; }
         internal string EntityId { get; set; }
@@ -25,7 +21,7 @@ namespace PairReader
             }
             string cardId = cardIdAttr.Value;
             string entityId = xElement.FirstAttribute.Value;
-            
+
             XElement child = xElement.FirstNode as XElement;
             while (child.Attribute("tag").Value != "50")
             {
@@ -46,11 +42,10 @@ namespace PairReader
             if (cardType == CardType.HERO)
             {
                 owner.SetHero(card.cardClass);
-                return;
             }
-            if (cardType == CardType.SPELL && card.mechanics != null && 
-                (card.mechanics.Contains("SECRET") || 
-                card.mechanics.Contains("QUEST") || 
+            if (cardType == CardType.SPELL && card.mechanics != null &&
+                (card.mechanics.Contains("SECRET") ||
+                card.mechanics.Contains("QUEST") ||
                 card.mechanics.Contains("SIDEQUEST")))
             {
                 cardType = CardType.SECRET;

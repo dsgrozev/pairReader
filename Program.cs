@@ -40,7 +40,7 @@ namespace PairReader
             if (replayDriver == null)
             {
                 FirefoxOptions ffo = new FirefoxOptions();
-                ffo.AddArgument("--headless");
+                //ffo.AddArgument("--headless");
                 ffo.SetPreference("pageLoadStrategy", "eager");
                 driver = new FirefoxDriver(ffo);
             }
@@ -50,7 +50,7 @@ namespace PairReader
             }
             driver.Url = url;
 
-            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(120));
+            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
             IWebElement success = null;
             bool firstAttempt = true;
             do
@@ -88,7 +88,8 @@ namespace PairReader
             Game.SaveGameCodes();
             Console.WriteLine("Games saved: " + Game.GameCodes.Count);
             Console.WriteLine("Games/Pairs = " +
-                String.Format("{0:00.00}", 100.0 * Game.GameCodes.Count / CardPair.CardPairs.Count));
+                string.Format("{0:0.00}", 100.0 * Game.GameCodes.Count / CardPair.CardPairs.Count) +
+                "%");
         }
 
         private static Game ParseXml(string xml, string gameCode)
@@ -169,9 +170,13 @@ namespace PairReader
             int counter = 0;
             do
             {
+                string oldCode = gameCode;
                 if (counter++ == 10000)
                 {
                     mainDriver.Navigate().Refresh();
+                    new WebDriverWait(mainDriver, TimeSpan.FromSeconds(10))
+                        .Until(ExpectedConditions.ElementExists(By.LinkText("Full speed")))
+                        .Click();
                     Console.WriteLine("Refresh");
                     counter = 0;
                 }
@@ -180,6 +185,10 @@ namespace PairReader
                 {
                     link = mainDriver.FindElementByClassName("replay-feed-item").GetAttribute("href");
                     gameCode = link.Split('/')[4];
+                    if (gameCode == oldCode)
+                    {
+                        continue;
+                    }
                 }
                 catch (Exception)
                 {
@@ -195,7 +204,7 @@ namespace PairReader
             Stream input;
             try
             {
-                 input = WebRequest.Create(href).GetResponse().GetResponseStream();
+                input = WebRequest.Create(href).GetResponse().GetResponseStream();
             }
             catch(WebException)
             {
