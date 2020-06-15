@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
@@ -8,7 +6,6 @@ using System.Text;
 using System.Xml.Linq;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
-using OpenQA.Selenium.Remote;
 using OpenQA.Selenium.Support.UI;
 
 namespace PairReader
@@ -21,35 +18,51 @@ namespace PairReader
         {
             Cards.Load();
             LoadSaved();
-            mainDriver = StartDriver("https://hsreplay.net/", "Full speed", true);
-            while (true)
+            
+            do
             {
-                string gameCode = String.Empty;
-                Game game = ParseXml(ReadXml(ref gameCode), gameCode);
-                if (game != null)
+                mainDriver = StartDriver("https://hsreplay.net/", "Full speed", true);
+                int oldCount = 0;
+                int newCount = 0;
+                double speed = 0;
+                double maxSpeed = 0; 
+                do
                 {
-                    Console.WriteLine("Adding game: " + game.Code);
-                    Save(game);
-                }
-            }
+                    string gameCode = String.Empty;
+                    DateTime start = DateTime.Now;
+                    Game game = ParseXml(ReadXml(ref gameCode, ref oldCount, ref newCount), gameCode);
+                    if (game != null)
+                    {
+                        TimeSpan diff = DateTime.Now - start;
+                        speed = (oldCount + newCount) / diff.TotalSeconds;
+                        maxSpeed = Math.Max(maxSpeed, speed);
+                        Console.WriteLine("Adding game: " + game.Code);
+                        Save(game);
+                        Console.WriteLine("Speed: " + string.Format("{0:0.00}", speed) + 
+                                          ". MaxSpeed: " + string.Format("{0:0.00}", maxSpeed) + 
+                                          ". Time taken: " + diff.ToString());
+                    }
+                } while (5 * speed > maxSpeed);
+                mainDriver.Quit();
+            } while (true);
         }
 
         private static FirefoxDriver StartDriver(string url, string linkText, bool click)
         {
-            FirefoxDriver driver = null;
-            if (replayDriver == null)
-            {
-                FirefoxOptions ffo = new FirefoxOptions();
-                //ffo.AddArgument("--headless");
-                ffo.SetPreference("pageLoadStrategy", "eager");
-                driver = new FirefoxDriver(ffo);
-            }
-            else
+            FirefoxDriver driver;
+            if (!click && replayDriver != null)
             {
                 driver = replayDriver;
             }
-            driver.Url = url;
+            else
+            {
+                FirefoxOptions ffo = new FirefoxOptions();
+                ffo.AddArguments(new[] { "--headless", "--private" });
+                ffo.SetPreference("pageLoadStrategy", "eager");
+                driver = new FirefoxDriver(ffo);
+            }
 
+            driver.Url = url;
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
             IWebElement success = null;
             bool firstAttempt = true;
@@ -164,10 +177,12 @@ namespace PairReader
                     gameElement.Attribute("scenarioID").Value == "2";
         }
 
-        private static string ReadXml(ref String gameCode)
+        private static string ReadXml(ref String gameCode, ref int oldCount, ref int newCount)
         {
             string link = string.Empty;
             int counter = 0;
+            oldCount = 0;
+            newCount = 0;
             do
             {
                 string oldCode = gameCode;
@@ -180,20 +195,25 @@ namespace PairReader
                     Console.WriteLine("Refresh");
                     counter = 0;
                 }
-                Console.Write(".");
                 try 
                 {
-                    link = mainDriver.FindElementByClassName("replay-feed-item").GetAttribute("href");
+                    var elements = mainDriver.FindElementsByClassName("replay-feed-item");
+                    link = elements[elements.Count - 1].GetAttribute("href");
                     gameCode = link.Split('/')[4];
                     if (gameCode == oldCode)
                     {
+                        Console.Write("o");
+                        oldCount++;
                         continue;
                     }
                 }
                 catch (Exception)
                 {
+                    Console.Write("e");
                     continue;
                 }
+                Console.Write(".");
+                newCount++;
             } while (gameCode == "" || Game.ContainsGame(gameCode));
 
             Console.WriteLine();
