@@ -25,7 +25,9 @@ namespace PairReader
                 int oldCount = 0;
                 int newCount = 0;
                 double speed = 0;
-                double maxSpeed = 0; 
+                double maxSpeed = 0;
+                double seconds = 0;
+                double fastest = double.MaxValue;
                 do
                 {
                     string gameCode = String.Empty;
@@ -34,15 +36,18 @@ namespace PairReader
                     if (game != null)
                     {
                         TimeSpan diff = DateTime.Now - start;
+                        seconds = diff.TotalSeconds;
+                        fastest = Math.Min(seconds, fastest);
                         speed = (oldCount + newCount) / diff.TotalSeconds;
                         maxSpeed = Math.Max(maxSpeed, speed);
                         Console.WriteLine("Adding game: " + game.Code);
                         Save(game);
-                        Console.WriteLine("Speed: " + string.Format("{0:0.00}", speed) + 
-                                          ". MaxSpeed: " + string.Format("{0:0.00}", maxSpeed) + 
-                                          ". Time taken: " + diff.ToString());
+                        Console.WriteLine("Speed: " + string.Format("{0:0.00}", speed) +
+                                          ". MaxSpeed: " + string.Format("{0:0.00}", maxSpeed) +
+                                          ". Time taken: " + string.Format("{0:0.00}", seconds) + "s" +
+                                          ". Fastest time: " + string.Format("{0:0.00}", fastest) + "s");
                     }
-                } while (5 * speed > maxSpeed);
+                } while (5 * fastest > seconds || 5 * speed > maxSpeed);
                 mainDriver.Quit();
             } while (true);
         }
