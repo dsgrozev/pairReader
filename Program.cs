@@ -32,10 +32,11 @@ namespace PairReader
                 {
                     string gameCode = String.Empty;
                     DateTime start = DateTime.Now;
-                    Game game = ParseXml(ReadXml(ref gameCode, ref oldCount, ref newCount), gameCode);
+                    DateTime end = DateTime.Now;
+                    Game game = ParseXml(ReadXml(ref gameCode, ref oldCount, ref newCount, ref end), gameCode);
                     if (game != null)
                     {
-                        TimeSpan diff = DateTime.Now - start;
+                        TimeSpan diff = end - start;
                         seconds = diff.TotalSeconds;
                         fastest = Math.Min(seconds, fastest);
                         speed = (oldCount + newCount) / diff.TotalSeconds;
@@ -47,7 +48,7 @@ namespace PairReader
                                           ". Time taken: " + string.Format("{0:0.00}", seconds) + "s" +
                                           ". Fastest time: " + string.Format("{0:0.00}", fastest) + "s");
                     }
-                } while (5 * fastest > seconds || 5 * speed > maxSpeed);
+                } while (4 * fastest > seconds || 5 * speed > maxSpeed);
                 mainDriver.Quit();
             } while (true);
         }
@@ -62,7 +63,9 @@ namespace PairReader
             else
             {
                 FirefoxOptions ffo = new FirefoxOptions();
-                ffo.AddArguments(new[] { "--headless", "--private" });
+                ffo.AddArguments(new[] {
+                    "--headless",
+                    "--private" });
                 ffo.SetPreference("pageLoadStrategy", "eager");
                 driver = new FirefoxDriver(ffo);
             }
@@ -182,7 +185,7 @@ namespace PairReader
                     gameElement.Attribute("scenarioID").Value == "2";
         }
 
-        private static string ReadXml(ref String gameCode, ref int oldCount, ref int newCount)
+        private static string ReadXml(ref String gameCode, ref int oldCount, ref int newCount, ref DateTime end)
         {
             string link = string.Empty;
             int counter = 0;
@@ -215,17 +218,21 @@ namespace PairReader
                 catch (Exception)
                 {
                     Console.Write("e");
-                    continue;
+                    break;
                 }
                 Console.Write(".");
                 newCount++;
             } while (gameCode == "" || Game.ContainsGame(gameCode));
 
+            end = DateTime.Now;
             Console.WriteLine();
             replayDriver = StartDriver(link, "Download Replay XML", false);
             IWebElement xmlLink = new WebDriverWait(replayDriver, TimeSpan.FromSeconds(10))
                 .Until(ExpectedConditions.ElementToBeClickable(By.LinkText("Download Replay XML")));
             string href = xmlLink.GetAttribute("href");
+
+            replayDriver.Url = "about:blank";
+
             Stream input;
             try
             {
