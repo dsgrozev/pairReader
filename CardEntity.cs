@@ -51,7 +51,14 @@ namespace PairReader
                 cardType = CardType.SECRET;
             }
 
-            if (int.Parse(entityId) > 64)
+            //if (int.Parse(entityId) > 64)
+
+            if (!card.collectible)
+            {
+                return;
+            }
+
+            if (card.cardClass != "NEUTRAL" && card.cardClass != owner.HeroClass.ToString())
             {
                 return;
             }

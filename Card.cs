@@ -8,7 +8,7 @@ namespace PairReader
     public class Cards
     {
         public static List<Card> CardList { get; set; }
-        internal static void Load()
+        public static void Load()
         {
             using (WebClient client = new WebClient())
             {
@@ -18,7 +18,17 @@ namespace PairReader
             }
         }
 
-        internal static Card FindByName(string cardName)
+        public static Card FindByNameCollectible(string cardName)
+        {
+            if (CardList.Exists(x => x.name == cardName && x.collectible == true))
+            {
+                return CardList.Find(x => x.name == cardName && x.collectible == true);
+            }
+
+            return null;
+        }
+
+        public static Card FindByName(string cardName)
         {
             if (CardList.Exists(x => x.name == cardName))
             {

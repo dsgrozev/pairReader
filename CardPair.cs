@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace PairReader
 {
-    internal class CardPair
+    public class CardPair : IComparable<CardPair>
     {
         public static List<CardPair> CardPairs = new List<CardPair>();
-        private static readonly string saveFile = @"e:\CardPairs\CardPairs.csv";
+        public static readonly string saveFile = @"e:\CardPairs\CardPairs.csv";
         private static readonly char saveDelimiter = ',';
 
         public CardPair(string card1, string card2, HeroClass hero, bool won)
@@ -93,7 +91,7 @@ namespace PairReader
             File.WriteAllText(saveFile, sb.ToString().Trim());
         }
 
-        private int Count()
+        public int Count()
         {
             return Wins + Losses;
         }
@@ -128,7 +126,7 @@ namespace PairReader
             }
         }
 
-        internal static void LoadPairs()
+        public static void LoadPairs()
         {
             if (!File.Exists(saveFile))
             {
@@ -148,6 +146,15 @@ namespace PairReader
                 };
                 CardPairs.Add(pair);
             }
+        }
+
+        public int CompareTo(CardPair other)
+        {
+            if (DeckWinPercentage() == other.DeckWinPercentage())
+            {
+                return -1 * Count().CompareTo(other.Count());
+            }
+            return -1 * DeckWinPercentage().CompareTo(other.DeckWinPercentage());
         }
     }
 }

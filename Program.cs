@@ -55,7 +55,7 @@ namespace PairReader
 
         private static FirefoxDriver StartDriver(string url, string linkText, bool click)
         {
-            FirefoxDriver driver;
+            FirefoxDriver driver = null;
             if (!click && replayDriver != null)
             {
                 driver = replayDriver;
@@ -67,7 +67,16 @@ namespace PairReader
                     "--headless",
                     "--private" });
                 ffo.SetPreference("pageLoadStrategy", "eager");
-                driver = new FirefoxDriver(ffo);
+                while (driver == null) {
+                    try
+                    {
+                        driver = new FirefoxDriver(ffo);
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                }
             }
 
             driver.Url = url;
@@ -105,11 +114,36 @@ namespace PairReader
             CardPair.AddGamePairs(game);
             Console.WriteLine("Adding " + game.CardPairs.Count + " new card pairs.");
             CardPair.SavePairs();
-            Console.WriteLine("Saving " + CardPair.CardPairs.Count + " total card pairs.");
+            Console.WriteLine("Saving " + String.Format("{0:n0}", CardPair.CardPairs.Count) + " total card pairs.");
             Game.SaveGameCodes();
-            Console.WriteLine("Games saved: " + Game.GameCodes.Count);
+            Console.WriteLine("Games saved: " + String.Format("{0:n0}",  Game.GameCodes.Count));
+            PrintPairs(HeroClass.DEMONHUNTER);
+            PrintPairs(HeroClass.DRUID);
+            PrintPairs(HeroClass.HUNTER);
+            PrintPairs(HeroClass.MAGE);
+            PrintPairs(HeroClass.PALADIN);
+            PrintPairs(HeroClass.PRIEST);
+            PrintPairs(HeroClass.ROGUE);
+            PrintPairs(HeroClass.SHAMAN);
+            PrintPairs(HeroClass.WARLOCK);
+            PrintPairs(HeroClass.WARRIOR);
             Console.WriteLine("Games/Pairs = " +
                 string.Format("{0:0.00}", 100.0 * Game.GameCodes.Count / CardPair.CardPairs.Count) +
+                "%");
+        }
+
+        private static void PrintPairs(HeroClass hero)
+        {
+            var pairs = CardPair.CardPairs.FindAll(x => x.Hero == hero);
+            int wins = 0;
+            int loses = 0;
+            foreach(var pair in pairs)
+            {
+                wins += pair.Wins;
+                loses += pair.Losses;
+            }
+            Console.WriteLine(hero + ": " + String.Format("{0:n0}",(wins + loses)) + " : " + (wins + loses > 0 ? 
+                string.Format("{0:0.00}", 100.0 * wins / (wins + loses)) : "0") +
                 "%");
         }
 
@@ -194,7 +228,7 @@ namespace PairReader
             do
             {
                 string oldCode = gameCode;
-                if (counter++ == 10000)
+                if (counter++ > 10000)
                 {
                     mainDriver.Navigate().Refresh();
                     new WebDriverWait(mainDriver, TimeSpan.FromSeconds(10))
@@ -218,7 +252,7 @@ namespace PairReader
                 catch (Exception)
                 {
                     Console.Write("e");
-                    break;
+                    continue;
                 }
                 Console.Write(".");
                 newCount++;
