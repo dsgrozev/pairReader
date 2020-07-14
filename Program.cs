@@ -30,7 +30,7 @@ namespace PairReader
                 double fastest = double.MaxValue;
                 do
                 {
-                    string gameCode = String.Empty;
+                    string gameCode = string.Empty;
                     DateTime start = DateTime.Now;
                     DateTime end = DateTime.Now;
                     Game game = ParseXml(ReadXml(ref gameCode, ref oldCount, ref newCount, ref end), gameCode);
@@ -82,22 +82,27 @@ namespace PairReader
             driver.Url = url;
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
             IWebElement success = null;
-            bool firstAttempt = true;
+            int i = 0;
             do
             {
                 try
                 {
-                    if (!firstAttempt) {
-                        driver.Navigate().Refresh();
+                    if (i > 0) {
+                        driver.Navigate().GoToUrl(url);
                     }
-                    firstAttempt = false;
+                    i++;
                     success = wait.Until(ExpectedConditions.ElementExists(By.LinkText(linkText)));
                 }
                 catch (Exception)
                 {
                     
                 }
-            } while (success == null);
+            } while (success == null && i < 3);
+            if (success == null)
+            {
+                driver.Quit();
+                return null;
+            }
             if (click)
             {
                 success.Click();
@@ -114,7 +119,7 @@ namespace PairReader
             CardPair.AddGamePairs(game);
             Console.WriteLine("Adding " + game.CardPairs.Count + " new card pairs.");
             CardPair.SavePairs();
-            Console.WriteLine("Saving " + String.Format("{0:n0}", CardPair.CardPairs.Count) + " total card pairs.");
+            Console.WriteLine("Saving " + string.Format("{0:n0}", CardPair.CardPairs.Count) + " total card pairs.");
             Game.SaveGameCodes();
             Console.WriteLine("Games saved: " + String.Format("{0:n0}",  Game.GameCodes.Count));
             PrintPairs(HeroClass.DEMONHUNTER);
@@ -142,14 +147,17 @@ namespace PairReader
                 wins += pair.Wins;
                 loses += pair.Losses;
             }
-            Console.WriteLine(hero + ": " + String.Format("{0:n0}",(wins + loses)) + " : " + (wins + loses > 0 ? 
-                string.Format("{0:0.00}", 100.0 * wins / (wins + loses)) : "0") +
+            Console.WriteLine(hero + ": " +
+                String.Format("{0:n0}", pairs.Count) + " -> " +
+                String.Format("{0:n0}", (wins + loses)) + 
+                " : " + 
+                (wins + loses > 0 ? string.Format("{0:0.00}", 100.0 * wins / (wins + loses)) : "0") +
                 "%");
         }
 
         private static Game ParseXml(string xml, string gameCode)
         {
-            if (xml == null)
+            if (xml == null || xml == "")
             {
                 return null;
             }
@@ -230,7 +238,14 @@ namespace PairReader
                 string oldCode = gameCode;
                 if (counter++ > 10000)
                 {
-                    mainDriver.Navigate().Refresh();
+                    try
+                    {
+                        mainDriver.Navigate().Refresh();
+                    }
+                    catch (Exception)
+                    {
+                        mainDriver = StartDriver("https://hsreplay.net/", "Full speed", true);
+                    }
                     new WebDriverWait(mainDriver, TimeSpan.FromSeconds(10))
                         .Until(ExpectedConditions.ElementExists(By.LinkText("Full speed")))
                         .Click();
@@ -261,7 +276,11 @@ namespace PairReader
             end = DateTime.Now;
             Console.WriteLine();
             replayDriver = StartDriver(link, "Download Replay XML", false);
-            IWebElement xmlLink = new WebDriverWait(replayDriver, TimeSpan.FromSeconds(10))
+            if (replayDriver == null)
+            {
+                return "";
+            }
+            IWebElement xmlLink = new WebDriverWait(replayDriver, TimeSpan.FromSeconds(100))
                 .Until(ExpectedConditions.ElementToBeClickable(By.LinkText("Download Replay XML")));
             string href = xmlLink.GetAttribute("href");
 
