@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Xml.Linq;
@@ -18,7 +21,11 @@ namespace PairReader
         {
             Cards.Load();
             LoadSaved();
-            
+            foreach (Process p in Process.GetProcessesByName("firefox"))
+            {
+                p.Kill();
+            }
+
             do
             {
                 mainDriver = StartDriver("https://hsreplay.net/", "Full speed", true);
@@ -30,6 +37,10 @@ namespace PairReader
                 double fastest = double.MaxValue;
                 do
                 {
+                    double oldSpeed = speed;
+                    double oldMaxSpeed = maxSpeed;
+                    double oldSeconds = seconds;
+                    double oldFastest = fastest == double.MaxValue ? 0 : fastest;
                     string gameCode = string.Empty;
                     DateTime start = DateTime.Now;
                     DateTime end = DateTime.Now;
@@ -43,10 +54,14 @@ namespace PairReader
                         maxSpeed = Math.Max(maxSpeed, speed);
                         Console.WriteLine("Adding game: " + game.Code);
                         Save(game);
-                        Console.WriteLine("Speed: " + string.Format("{0:0.00}", speed) +
-                                          ". MaxSpeed: " + string.Format("{0:0.00}", maxSpeed) +
-                                          ". Time taken: " + string.Format("{0:0.00}", seconds) + "s" +
-                                          ". Fastest time: " + string.Format("{0:0.00}", fastest) + "s");
+                        Console.WriteLine("Speed: " + string.Format("{0:0.00}", speed) + " lps (" +
+                                          string.Format("{0:+#.00;-#.00;0}", speed - oldSpeed) + ")");
+                        Console.WriteLine("MaxSpeed: " + string.Format("{0:0.00}", maxSpeed) + " lps (" +
+                                          string.Format("{0:+#.00;-#.00;0}", maxSpeed - oldMaxSpeed) + ")");
+                        Console.WriteLine("Time taken: " + string.Format("{0:0.00}", seconds) + "s (" +
+                                          string.Format("{0:+#.00;-#.00;0}", seconds - oldSeconds) + ")");
+                        Console.WriteLine("Fastest time: " + string.Format("{0:0.00}", fastest) + "s (" +
+                                          string.Format("{0:+#.00;-#.00;0}", fastest - oldFastest) + ")");
                     }
                 } while (4 * fastest > seconds || 5 * speed > maxSpeed);
                 mainDriver.Quit();
@@ -113,31 +128,50 @@ namespace PairReader
         private static void Save(Game game)
         {
             Game.GameCodes.Add(game.Code);
-            string winner = game.First.IsWinner ? game.First.HeroClass.ToString() : game.Second.HeroClass.ToString();
-            string loser = game.First.IsWinner ? game.Second.HeroClass.ToString() : game.First.HeroClass.ToString();
+            HeroClass winner = game.First.IsWinner ? game.First.HeroClass : game.Second.HeroClass;
+            HeroClass loser = game.First.IsWinner ? game.Second.HeroClass : game.First.HeroClass;
             Console.WriteLine(winner + " beats " + loser);
+            int oldPairsCount = CardPair.CardPairs.Count;
+            List<Stats> stats = new List<Stats>();
+            foreach (HeroClass hero in Enum.GetValues(typeof(HeroClass)))
+            {
+                if (hero == winner || hero == loser)
+                {
+                    stats.Add(new Stats(hero));
+                }
+            }
+
             CardPair.AddGamePairs(game);
             Console.WriteLine("Adding " + game.CardPairs.Count + " new card pairs.");
             CardPair.SavePairs();
-            Console.WriteLine("Saving " + string.Format("{0:n0}", CardPair.CardPairs.Count) + " total card pairs.");
+            Console.WriteLine("Saving " + 
+                               string.Format("{0:n0}", CardPair.CardPairs.Count) + 
+                               " (" + string.Format("{0:+#;-#;0}", CardPair.CardPairs.Count - oldPairsCount) + ")" + 
+                               " total card pairs.");
             Game.SaveGameCodes();
             Console.WriteLine("Games saved: " + String.Format("{0:n0}",  Game.GameCodes.Count));
-            PrintPairs(HeroClass.DEMONHUNTER);
-            PrintPairs(HeroClass.DRUID);
-            PrintPairs(HeroClass.HUNTER);
-            PrintPairs(HeroClass.MAGE);
-            PrintPairs(HeroClass.PALADIN);
-            PrintPairs(HeroClass.PRIEST);
-            PrintPairs(HeroClass.ROGUE);
-            PrintPairs(HeroClass.SHAMAN);
-            PrintPairs(HeroClass.WARLOCK);
-            PrintPairs(HeroClass.WARRIOR);
+            double percentage = 100.0 * Game.GameCodes.Count / CardPair.CardPairs.Count;
             Console.WriteLine("Games/Pairs = " +
-                string.Format("{0:0.00}", 100.0 * Game.GameCodes.Count / CardPair.CardPairs.Count) +
-                "%");
+                              string.Format("{0:0.00}", percentage) +
+                              "% (" + string.Format("{0:+#.00;-#.00;0}", 
+                              percentage - 100.0 * (Game.GameCodes.Count - 1) / oldPairsCount) + ")");
+            Console.WriteLine("---------------------");
+            foreach (HeroClass hero in Enum.GetValues(typeof(HeroClass)))
+            {
+                Stats st = stats.Find(x => x.hero == hero);
+                if (st == null)
+                {
+                    PrintPairs(hero);
+                }
+                else
+                {
+                    PrintPairs(hero, st.pairs, st.wins, st.loses);
+                }
+            }
+            Console.WriteLine("---------------------");
         }
 
-        private static void PrintPairs(HeroClass hero)
+        private static void PrintPairs(HeroClass hero, int oldPairs = 0, int oldWins = 0, int oldLoses = 0)
         {
             var pairs = CardPair.CardPairs.FindAll(x => x.Hero == hero);
             int wins = 0;
@@ -147,12 +181,28 @@ namespace PairReader
                 wins += pair.Wins;
                 loses += pair.Losses;
             }
-            Console.WriteLine(hero + ": " +
-                String.Format("{0:n0}", pairs.Count) + " -> " +
-                String.Format("{0:n0}", (wins + loses)) + 
-                " : " + 
-                (wins + loses > 0 ? string.Format("{0:0.00}", 100.0 * wins / (wins + loses)) : "0") +
-                "%");
+            if (oldPairs == 0)
+            {
+                Console.WriteLine(hero + ": " +
+                    string.Format("{0:n0}", pairs.Count) + " -> " +
+                    string.Format("{0:n0}", (wins + loses)) +
+                    " : " +
+                    (wins + loses > 0 ? string.Format("{0:0.00}", 100.0 * wins / (wins + loses)) : "0") +
+                    "%");
+            }
+            else
+            {
+                Console.WriteLine(hero + ": " +
+                    string.Format("{0:n0}", pairs.Count) +
+                    "(" + string.Format("{0:+#;-#;0}", pairs.Count - oldPairs) + ")" + 
+                    " -> " +
+                    string.Format("{0:n0}", (wins + loses)) +
+                    "(" + string.Format("{0:+#;-#;0}", wins + loses - oldWins - oldLoses) + ")" +
+                    " : " +
+                    (wins + loses > 0 ? string.Format("{0:0.00}", 100.0 * wins / (wins + loses)) : "0") +
+                    "(" + (string.Format("{0:+#.00;-#.00;0}", 100.0 * wins / (wins + loses) - 100.0 * oldWins / (oldWins + oldLoses))) + ")" +
+                    "%");
+            }
         }
 
         private static Game ParseXml(string xml, string gameCode)

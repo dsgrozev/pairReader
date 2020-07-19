@@ -20,32 +20,22 @@ namespace PairReader
 
         public static Card FindByNameCollectible(string cardName)
         {
-            if (CardList.Exists(x => x.name == cardName && x.collectible == true))
-            {
-                return CardList.Find(x => x.name == cardName && x.collectible == true);
-            }
+            return CardList.Find(x => x.name == cardName && x.collectible == true);
+        }
 
-            return null;
+        public static Card FindByNameNotHeroCollectible(string cardName)
+        {
+            return CardList.Find(x => x.name == cardName && x.collectible == true && x.set != "HERO_SKINS");
         }
 
         public static Card FindByName(string cardName)
         {
-            if (CardList.Exists(x => x.name == cardName))
-            {
-                return CardList.Find(x => x.name == cardName);
-            }
-
-            return null;
+            return CardList.Find(x => x.name == cardName);
         }
 
         internal static Card Find(string cardId)
         {
-            if (CardList.Exists(x => x.id == cardId))
-            {
-                return CardList.Find(x => x.id == cardId);
-            }
-
-            return null;
+            return CardList.Find(x => x.id == cardId);
         }
 
     }
@@ -53,44 +43,18 @@ namespace PairReader
     { 
 #pragma warning disable IDE1006 // Naming Styles
         public string artist { get; set; }
-#pragma warning restore IDE1006 // Naming Styles
-#pragma warning disable IDE1006 // Naming Styles
         public string cardClass { get; set; }
-#pragma warning restore IDE1006 // Naming Styles
-#pragma warning disable IDE1006 // Naming Styles
         public bool collectible { get; set; }
-#pragma warning restore IDE1006 // Naming Styles
-#pragma warning disable IDE1006 // Naming Styles
         public int cost { get; set; }
-#pragma warning restore IDE1006 // Naming Styles
-#pragma warning disable IDE1006 // Naming Styles
         public int dbfId { get; set; }
-#pragma warning restore IDE1006 // Naming Styles
-#pragma warning disable IDE1006 // Naming Styles
         public string flavor { get; set; }
-#pragma warning restore IDE1006 // Naming Styles
-#pragma warning disable IDE1006 // Naming Styles
         public string id { get; set; }
-#pragma warning restore IDE1006 // Naming Styles
-#pragma warning disable IDE1006 // Naming Styles
         public List<string> mechanics { get; set; }
-#pragma warning restore IDE1006 // Naming Styles
-#pragma warning disable IDE1006 // Naming Styles
         public string name { get; set; }
-#pragma warning restore IDE1006 // Naming Styles
-#pragma warning disable IDE1006 // Naming Styles
         public string rarity { get; set; }
-#pragma warning restore IDE1006 // Naming Styles
-#pragma warning disable IDE1006 // Naming Styles
         public List<string> referencedTags { get; set; }
-#pragma warning restore IDE1006 // Naming Styles
-#pragma warning disable IDE1006 // Naming Styles
         public string set { get; set; }
-#pragma warning restore IDE1006 // Naming Styles
-#pragma warning disable IDE1006 // Naming Styles
         public string text { get; set; }
-#pragma warning restore IDE1006 // Naming Styles
-#pragma warning disable IDE1006 // Naming Styles
         public string type { get; set; }
 #pragma warning restore IDE1006 // Naming Styles
     }
