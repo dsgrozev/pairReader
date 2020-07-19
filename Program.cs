@@ -52,6 +52,7 @@ namespace PairReader
                         fastest = Math.Min(seconds, fastest);
                         speed = (oldCount + newCount) / diff.TotalSeconds;
                         maxSpeed = Math.Max(maxSpeed, speed);
+                        Console.WriteLine("---------------------");
                         Console.WriteLine("Adding game: " + game.Code);
                         Save(game);
                         Console.WriteLine("Speed: " + string.Format("{0:0.00}", speed) + " lps (" +
@@ -62,6 +63,7 @@ namespace PairReader
                                           string.Format("{0:+#.00;-#.00;0}", seconds - oldSeconds) + ")");
                         Console.WriteLine("Fastest time: " + string.Format("{0:0.00}", fastest) + "s (" +
                                           string.Format("{0:+#.00;-#.00;0}", fastest - oldFastest) + ")");
+                        Console.WriteLine("---------------------");
                     }
                 } while (4 * fastest > seconds || 5 * speed > maxSpeed);
                 mainDriver.Quit();
@@ -137,10 +139,13 @@ namespace PairReader
             {
                 if (hero == winner || hero == loser)
                 {
-                    stats.Add(new Stats(hero));
+                    if (stats.Find(x => x.hero == hero) == null)
+                    {
+                        stats.Add(new Stats(hero));
+                    }
                 }
             }
-
+            Console.WriteLine("---------------------");
             CardPair.AddGamePairs(game);
             Console.WriteLine("Adding " + game.CardPairs.Count + " new card pairs.");
             CardPair.SavePairs();
@@ -158,6 +163,10 @@ namespace PairReader
             Console.WriteLine("---------------------");
             foreach (HeroClass hero in Enum.GetValues(typeof(HeroClass)))
             {
+                if (hero == HeroClass.NONE)
+                {
+                    continue;
+                }
                 Stats st = stats.Find(x => x.hero == hero);
                 if (st == null)
                 {
@@ -200,8 +209,7 @@ namespace PairReader
                     " (" + string.Format("{0:+#;-#;0}", wins + loses - oldWins - oldLoses) + ")" +
                     " : " +
                     (wins + loses > 0 ? string.Format("{0:0.00}", 100.0 * wins / (wins + loses)) : "0") +
-                    " (" + (string.Format("{0:+#.00;-#.00;0}", 100.0 * wins / (wins + loses) - 100.0 * oldWins / (oldWins + oldLoses))) + ")" +
-                    "%");
+                    "% (" + string.Format("{0:+#.00;-#.00;0}", 100.0 * wins / (wins + loses) - 100.0 * oldWins / (oldWins + oldLoses)) + ")");
             }
         }
 
