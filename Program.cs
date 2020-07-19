@@ -194,13 +194,13 @@ namespace PairReader
             {
                 Console.WriteLine(hero + ": " +
                     string.Format("{0:n0}", pairs.Count) +
-                    "(" + string.Format("{0:+#;-#;0}", pairs.Count - oldPairs) + ")" + 
+                    " (" + string.Format("{0:+#;-#;0}", pairs.Count - oldPairs) + ")" + 
                     " -> " +
                     string.Format("{0:n0}", (wins + loses)) +
-                    "(" + string.Format("{0:+#;-#;0}", wins + loses - oldWins - oldLoses) + ")" +
+                    " (" + string.Format("{0:+#;-#;0}", wins + loses - oldWins - oldLoses) + ")" +
                     " : " +
                     (wins + loses > 0 ? string.Format("{0:0.00}", 100.0 * wins / (wins + loses)) : "0") +
-                    "(" + (string.Format("{0:+#.00;-#.00;0}", 100.0 * wins / (wins + loses) - 100.0 * oldWins / (oldWins + oldLoses))) + ")" +
+                    " (" + (string.Format("{0:+#.00;-#.00;0}", 100.0 * wins / (wins + loses) - 100.0 * oldWins / (oldWins + oldLoses))) + ")" +
                     "%");
             }
         }
