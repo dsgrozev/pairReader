@@ -134,6 +134,7 @@ namespace PairReader
             HeroClass loser = game.First.IsWinner ? game.Second.HeroClass : game.First.HeroClass;
             Console.WriteLine(winner + " beats " + loser);
             int oldPairsCount = CardPair.CardPairs.Count;
+            int oldFullPairsCount = CardPair.FullCardPairs.Count;
             List<Stats> stats = new List<Stats>();
             foreach (HeroClass hero in Enum.GetValues(typeof(HeroClass)))
             {
@@ -146,20 +147,32 @@ namespace PairReader
                 }
             }
             Console.WriteLine("---------------------");
-            CardPair.AddGamePairs(game);
+            CardPair.AddGamePairs(game.CardPairs, CardPair.CardPairs);
+            CardPair.AddGamePairs(game.FullCardPairs, CardPair.FullCardPairs);
             Console.WriteLine("Adding " + game.CardPairs.Count + " new card pairs.");
-            CardPair.SavePairs();
+            Console.WriteLine("Adding " + game.FullCardPairs.Count + " new full card pairs.");
+            CardPair.SavePairs(CardPair.CardPairs, false);
+            CardPair.SavePairs(CardPair.FullCardPairs, true);
             Console.WriteLine("Saving " + 
                                string.Format("{0:n0}", CardPair.CardPairs.Count) + 
                                " (" + string.Format("{0:+#;-#;0}", CardPair.CardPairs.Count - oldPairsCount) + ")" + 
                                " total card pairs.");
+            Console.WriteLine("Saving " +
+                   string.Format("{0:n0}", CardPair.FullCardPairs.Count) +
+                   " (" + string.Format("{0:+#;-#;0}", CardPair.FullCardPairs.Count - oldFullPairsCount) + ")" +
+                   " total full card pairs.");
             Game.SaveGameCodes();
             Console.WriteLine("Games saved: " + String.Format("{0:n0}",  Game.GameCodes.Count));
             double percentage = 100.0 * Game.GameCodes.Count / CardPair.CardPairs.Count;
+            double fullPercentage = 100.0 * Game.GameCodes.Count / CardPair.FullCardPairs.Count;
             Console.WriteLine("Games/Pairs = " +
                               string.Format("{0:0.00}", percentage) +
                               "% (" + string.Format("{0:+#.00;-#.00;0}", 
                               percentage - 100.0 * (Game.GameCodes.Count - 1) / oldPairsCount) + ")");
+            Console.WriteLine("Games/Full Pairs = " +
+                  string.Format("{0:0.00}", fullPercentage) +
+                  "% (" + string.Format("{0:+#.00;-#.00;0}",
+                  fullPercentage - 100.0 * (Game.GameCodes.Count - 1) / oldFullPairsCount) + ")");
             Console.WriteLine("---------------------");
             foreach (HeroClass hero in Enum.GetValues(typeof(HeroClass)))
             {
@@ -168,21 +181,30 @@ namespace PairReader
                     continue;
                 }
                 Stats st = stats.Find(x => x.hero == hero);
+                Console.WriteLine(hero.ToString() + ":");
                 if (st == null)
                 {
-                    PrintPairs(hero);
+                    PrintPairs(CardPair.CardPairs, hero);
                 }
                 else
                 {
-                    PrintPairs(hero, st.pairs, st.wins, st.loses);
+                    PrintPairs(CardPair.CardPairs, hero, st.pairs, st.wins, st.loses);
+                }
+                if (st == null)
+                {
+                    PrintPairs(CardPair.FullCardPairs, hero);
+                }
+                else
+                {
+                    PrintPairs(CardPair.FullCardPairs, hero, st.fullPairs, st.fullWins, st.fullLoses);
                 }
             }
             Console.WriteLine("---------------------");
         }
 
-        private static void PrintPairs(HeroClass hero, int oldPairs = 0, int oldWins = 0, int oldLoses = 0)
+        private static void PrintPairs(List<CardPair> cardPairs, HeroClass hero, int oldPairs = 0, int oldWins = 0, int oldLoses = 0)
         {
-            var pairs = CardPair.CardPairs.FindAll(x => x.Hero == hero);
+            var pairs = cardPairs.FindAll(x => x.Hero == hero);
             int wins = 0;
             int loses = 0;
             foreach(var pair in pairs)
@@ -192,7 +214,7 @@ namespace PairReader
             }
             if (oldPairs == 0)
             {
-                Console.WriteLine(hero + ": " +
+                Console.WriteLine(
                     string.Format("{0:n0}", pairs.Count) + " -> " +
                     string.Format("{0:n0}", (wins + loses)) +
                     " : " +
@@ -201,7 +223,7 @@ namespace PairReader
             }
             else
             {
-                Console.WriteLine(hero + ": " +
+                Console.WriteLine(
                     string.Format("{0:n0}", pairs.Count) +
                     " (" + string.Format("{0:+#;-#;0}", pairs.Count - oldPairs) + ")" + 
                     " -> " +
@@ -372,7 +394,8 @@ namespace PairReader
 
         private static void LoadSaved()
         {
-            CardPair.LoadPairs();
+            CardPair.LoadPairs(CardPair.saveFile, CardPair.CardPairs);
+            CardPair.LoadPairs(CardPair.fullSaveFile, CardPair.FullCardPairs);
             Game.LoadGameCodes();
         }
     }

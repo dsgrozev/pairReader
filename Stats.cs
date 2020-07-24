@@ -5,6 +5,9 @@
         internal int pairs;
         internal int loses;
         internal int wins;
+        internal int fullPairs;
+        internal int fullLoses;
+        internal int fullWins;
         internal HeroClass hero;
 
         public Stats(HeroClass hero)
@@ -16,6 +19,13 @@
             {
                 wins += pair.Wins;
                 loses += pair.Losses;
+            }
+            heroPairs = CardPair.FullCardPairs.FindAll(x => x.Hero == hero);
+            fullPairs = heroPairs.Count;
+            foreach (var pair in heroPairs)
+            {
+                fullWins += pair.Wins;
+                fullLoses += pair.Losses;
             }
         }
     }

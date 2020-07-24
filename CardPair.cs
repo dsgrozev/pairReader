@@ -8,7 +8,9 @@ namespace PairReader
     public class CardPair : IComparable<CardPair>
     {
         public static List<CardPair> CardPairs = new List<CardPair>();
+        public static List<CardPair> FullCardPairs = new List<CardPair>();
         public static readonly string saveFile = @"e:\CardPairs\CardPairs.csv";
+        public static readonly string fullSaveFile = @"e:\CardPairs\FullCardPairs.csv";
         private static readonly char saveDelimiter = ',';
 
         public CardPair(string card1, string card2, HeroClass hero, bool won)
@@ -68,11 +70,11 @@ namespace PairReader
             Losses += other.Losses;
         }
 
-        internal static void SavePairs()
+        internal static void SavePairs(List<CardPair> cardPairs, bool isFull)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("Card1,Card2,Hero,Wins,Loses,Percentage,Count");
-            foreach(CardPair cp in CardPairs)
+            foreach(CardPair cp in cardPairs)
             {
                 sb.Append("\"" + cp.Card1 + "\"")
                     .Append(saveDelimiter)
@@ -88,7 +90,12 @@ namespace PairReader
                     .Append(saveDelimiter)
                     .AppendLine(cp.Count().ToString());
             }
-            File.WriteAllText(saveFile, sb.ToString().Trim());
+            string _saveFile = saveFile;
+            if (isFull)
+            {
+                _saveFile = fullSaveFile;
+            }
+            File.WriteAllText(_saveFile, sb.ToString().Trim());
         }
 
         public int Count()
@@ -111,22 +118,22 @@ namespace PairReader
             return (Card1 + Card2 + Hero.ToString()).GetHashCode();
         }
 
-        internal static void AddGamePairs(Game game)
+        internal static void AddGamePairs(List<CardPair> gamePairs, List<CardPair> globalPairs)
         {
-            foreach (CardPair cp in game.CardPairs)
+            foreach (CardPair cp in gamePairs)
             {
-                if (CardPairs.Contains(cp))
+                if (globalPairs.Contains(cp))
                 {
-                    CardPairs.Find(x => x.Equals(cp)).AddCardPair(cp);
+                    globalPairs.Find(x => x.Equals(cp)).AddCardPair(cp);
                 }
                 else
                 {
-                    CardPairs.Add(cp);
+                    globalPairs.Add(cp);
                 }
             }
         }
 
-        public static void LoadPairs()
+        public static void LoadPairs(string saveFile, List<CardPair> cardPairs)
         {
             if (!File.Exists(saveFile))
             {
@@ -144,7 +151,7 @@ namespace PairReader
                     Wins = int.Parse(rest[1]),
                     Losses = int.Parse(rest[2])
                 };
-                CardPairs.Add(pair);
+                cardPairs.Add(pair);
             }
         }
 

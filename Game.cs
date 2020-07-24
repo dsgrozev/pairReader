@@ -19,6 +19,8 @@ namespace PairReader
 
         internal List<CardPair> CardPairs = new List<CardPair>();
 
+        internal List<CardPair> FullCardPairs = new List<CardPair>();
+
         private int turn = 0;
         public int Turn 
         { 
@@ -104,21 +106,21 @@ namespace PairReader
             throw new InvalidOperationException();
         }
 
-        private void AddCardPair(CardPair cp)
+        private void AddCardPair(List<CardPair> cardPairs, CardPair cp)
         {
             if (cp == null)
             {
                 return;
             }
-            if (CardPairs.Contains(cp))
+            if (cardPairs.Contains(cp))
             {
-                CardPair existing = CardPairs.Find(x => x.Equals(cp));
+                CardPair existing = cardPairs.Find(x => x.Equals(cp));
                 if (existing != null && existing.Wins == cp.Wins)
                 {
                     return;
                 }
             }
-            CardPairs.Add(cp);
+            cardPairs.Add(cp);
         }
 
         internal void Summarize()
@@ -140,7 +142,20 @@ namespace PairReader
                     }
                     if (IsValidPair(ce, other))
                     {
-                        AddCardPair(new CardPair(ce.Name, other.Name, ce.Owner.HeroClass, ce.Owner.IsWinner));
+                        AddCardPair(CardPairs, new CardPair(ce.Name, other.Name, ce.Owner.HeroClass, ce.Owner.IsWinner));
+                    }
+                }
+                others.Clear();
+                others.AddRange(Cards.FindAll(x => x.Owner == ce.Owner && x.Turn != 0));
+                foreach (CardEntity other in others)
+                {
+                    if (other.Name is null)
+                    {
+                        continue;
+                    }
+                    if (IsValidPair(ce, other))
+                    {
+                        AddCardPair(FullCardPairs, new CardPair(ce.Name, other.Name, ce.Owner.HeroClass, ce.Owner.IsWinner));
                     }
                 }
             }
